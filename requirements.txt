@@ -1,0 +1,32 @@
+# Mirrors the Codabench worker stack (external/2026-competition/requirements.txt)
+# so local preprocessing and scoring match the platform. torchvision, torchaudio,
+# mne, scipy, etc. come in as dependencies of the packages below.
+
+# Core
+torch
+numpy
+pandas
+scikit-learn
+pyyaml
+
+# NeuralBench ecosystem: pinned exactly like the Codabench worker image
+neuralbench==0.4.0
+neuralset==0.4.0
+neuralfetch==0.4.0
+neuraltrain==0.4.0
+exca==0.5.29
+mne
+moabb
+# VEMG2Pose and the EEGNet baseline
+braindecode
+
+# EMG2Pose download from NEMAR (track README: eegdash; worker image: nemar-py)
+eegdash>=0.8.2
+nemar-py>=0.3.1
+
+# Competition harness: local scoring and packaging
+benchopt>=1.10
+
+# Notebooks
+ipykernel
+matplotlib
