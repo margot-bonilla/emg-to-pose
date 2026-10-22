@@ -26,8 +26,8 @@ Goal: 2–3 well-tested candidates ready by **Nov 4**, selected on a held-out sp
 
 | # | When | Goal | Done when |
 |---|---|---|---|
-| 1 | Oct 23 | `make env`, official repo, `make starter` | `starter.yml` (MeanPose on Simulated) passes |
-| 2 | Oct 23–24 | EMG2Pose: **check size on NEMAR (NM000281)**, decide where `data/` lives, download, `--prepare` | the `emg/pose` task loads a train and a test batch |
+| 1 ✅ | Oct 22 | `make env`, official repo, `make starter` | `starter.yml` (MeanPose on Simulated) passes: 20.8° on Simulated |
+| 2 | Oct 23–24 | EMG2Pose (~340 GB in full, see below): measure the cache on 1–2 subjects, then download a subset or everything, `--prepare` | the `emg/pose` task loads a train and a test batch |
 | 3 | Oct 24–25 | `scripts/eval_local.py` (scores folders like Codabench, plus ensembles) + a first baseline (`Torch-Linear`, then NeuralBench VEMG2Pose) | one warm-up upload where local MAE = Codabench MAE; then delete `docs/handoff_track4_emg_pose.md` (its useful parts live in README/PLAN) |
 | 4 | Oct 25–26 | Held-out split committed in `configs/` | every run reports a held-out MAE |
 | 5 | Oct 26–28 | Window cache, `scripts/train_solver.py`, `submission/submission.py` with per-epoch checkpoints, `--resume` and smoothed early stopping | a restartable run that exports an upload-ready folder with `run_config.json` |
@@ -50,15 +50,17 @@ Track 1's `configs/heldout_*.json`) so every run uses the same one.
    (1,790 samples of left context); Codabench gives exactly 5 s, so the official template pads by
    reflection. Training on the evaluated format should remove that train/test mismatch.
 2. **Normalisation:** per-window and per-channel normalisation of the raw µV (amplitude depends on
-   skin and band placement), against the pipeline's default.
-3. **Band-rotation augmentation:** roll the 16 channels by ±1 electrode (the wristband sits
-   differently on each person), plus amplitude scaling per channel.
+   skin and band placement), against the pipeline's default (none: raw µV into VEMG2Pose's LayerNorm).
+3. **Augmentation beyond the baseline's:** the baseline already rotates the band by −1/0/+1
+   electrode (one offset per batch; upstream emg2pose draws one per window). Try per-window offsets,
+   per-channel amplitude scaling, time jitter.
 4. **Number of participants:** train on 25 / 50 / 100 / all train users; on Track 1, more people
    was the biggest lever for unseen people.
-5. **Model size and loss:** L1 on angles in radians (the metric) vs smooth L1 / MSE; a wider or deeper network.
-6. **Pretrained models:** check whether NeuralBench's Track 4 baselines fine-tune anything
-   (`neuralbench/defaults/downstream_wrappers.yaml`); if so, fine-tune fully, don't just probe.
-7. **Seed ensembles** (average of angles) for the final candidates: +2–3 points on Track 1, and steadier in the audit.
+5. **Model size and loss:** L1 on angles in radians (the metric, and the baseline's loss) vs smooth L1; a wider or deeper network.
+6. **Seed ensembles** (average of angles) for the final candidates: +2–3 points on Track 1, and steadier in the audit.
+
+Nothing in the Track 4 baseline is pretrained (VEMG2Pose trains from scratch), so the
+"fine-tune the foundation model" lesson from Track 1 doesn't apply unless we bring an EMG model.
 
 Early stopping and selection always use a **smoothed** held-out score (mean of the last 3 epochs, patience ~10).
 
@@ -75,12 +77,29 @@ Early stopping and selection always use a **smoothed** held-out score (mean of t
 Already here: `Makefile`, `scripts/neuralbench_config.py` (now a repo-local config),
 `scripts/training.sh` (machine-wide, labels each run's project), `scripts/battery_guard.sh`, `RESULTS.md`.
 
+## EMG2Pose facts (from neuralfetch / neuralbench 0.4.0)
+
+- **Size: ~340 GB** for the 193 subjects (~1.8 GB each), BIDS `.bdf` from NEMAR, in
+  `<data>/Salter2024Emg2pose/download/nm000281/`, plus a small `emg2pose_metadata.csv` (paper splits).
+  A study query naming its subjects (`subject in [...]`) downloads only those.
+  The preprocessed cache (`cache/`) comes on top; its size is unknown until measured.
+- 25,253 recordings. Targets are the 20 joint angles stored as MISC channels in the same BDF, in radians;
+  frames where inverse kinematics failed are NaN, and windows touching them are dropped.
+- Splits: the paper's `split` column (train/val/test). Test keeps only `generalization == user_stage`
+  (the warm-up set); val keeps both of its scenarios. Recordings shorter than 5.895 s are dropped.
+- Windows: 5 s, stride 5 s; EMG scaled V → µV; no filtering or scaling.
+- Baseline recipe (`neuralbench/tasks/emg/pose/config.yaml`): VEMG2Pose, Adam lr 1e-3 constant, L1 loss,
+  100 epochs, patience 20 on `val/mae`, band rotation ±1. About 0.3 h/epoch on a cluster GPU, i.e. ~30 h for
+  100 epochs: on a Mac, expect much longer. Measure it before planning around it.
+
 ## Open questions
 
-- EMG2Pose download size (it lives in this repo's `data/`, not shared with Track 1).
+- **Disk:** 340 GB raw + cache vs 535 GB free. Options: a subset of subjects (the participant curve
+  says how much we lose), an external drive, or Enrique's Mac for the full set.
 - One copy on disk: the NeuralBench CLI downloads to `data/`, while benchopt's `Salter2024Emg2pose`
-  uses its own `get_data_path("neural_compet")` (by default inside `external/`). Point both at the
-  same folder before downloading (e.g. `BENCHOPT_DATA_HOME`), or the data is fetched twice.
+  uses `get_data_path("neural_compet")` (by default inside `external/`). Point both at the same
+  folder before downloading (e.g. `BENCHOPT_DATA_HOME`), or the data is fetched twice.
+- How long VEMG2Pose takes per epoch on `mps`.
 - Training cost of NeuralBench's VEMG2Pose on a Mac (`mps`).
 - Whether anything in the Track 4 baselines is pretrained.
 - Who uploads what in the sealed phase (5 uploads each, separate from Track 1's).
