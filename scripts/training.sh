@@ -1,5 +1,6 @@
 #!/bin/bash
-# Pause, resume or show the local training runs (scripts/train_solver.py and its data workers).
+# Pause, resume or show the local training runs (scripts/train_solver.py, NeuralBench runs through
+# scripts/neuralbench_mps.py, and their data workers). neuralbench_mps.py --download is not a run.
 #
 #     scripts/training.sh pause | resume | status
 #
@@ -10,7 +11,9 @@
 # Deliberately machine-wide: it also catches runs started from other projects with the same
 # script name (Track 1 on the same Mac), so pausing before closing the laptop freezes everything.
 set -u
-mains=$(pgrep -f "scripts/train_solver.py")
+mains=$(for pid in $(pgrep -f "scripts/(train_solver|neuralbench_mps)\.py"); do
+  ps -o command= -p "$pid" | grep -q -- "--download" || echo "$pid"
+done)
 case "${1:-status}" in
   pause | resume)
     [ -z "$mains" ] && { echo "No training run."; exit 0; }
@@ -27,12 +30,15 @@ case "${1:-status}" in
     [ -z "$mains" ] && { echo "No training run."; exit 0; }
     for main in $mains; do
       state=$(ps -o stat= -p "$main")
-      out=$(ps -o command= -p "$main" | awk '{print $4}')
+      cmd=$(ps -o command= -p "$main")
+      out=$(echo "$cmd" | awk '{print $4}')
+      [[ $cmd == *neuralbench_mps.py* ]] && out="neuralbench $(echo "$cmd" | sed 's/.*neuralbench_mps.py //')"
       # The run's project: its working directory (logs/ are relative to it).
       cwd=$(lsof -a -d cwd -p "$main" -Fn 2>/dev/null | sed -n 's/^n//p')
       echo "$(basename "$cwd"): $out: $([[ $state == T* ]] && echo PAUSED || echo running), started $(ps -o lstart= -p "$main")"
       log=$(ls -t "$cwd"/logs/"$(basename "$out")"_train.log 2>/dev/null | head -1)
       [ -n "$log" ] && grep "^epoch" "$log" | tail -1
+      [[ $cmd == *neuralbench_mps.py* ]] && grep -h "^\[epoch" "$cwd"/logs/neuralbench_*.log 2>/dev/null | tail -1
     done
     ;;
   *) echo "usage: $0 pause | resume | status"; exit 1 ;;
