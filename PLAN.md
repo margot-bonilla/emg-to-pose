@@ -128,6 +128,11 @@ After the fix, `eval_local.py submissions/meanpose_floor --split test` = **22.62
   batch, so **~4 min/epoch GPU-bound** on the subset (771 train + 343 val batches). Reading ~110 MB per batch from
   the cache may make that longer: measure the real figure with the first run (`neuralbench_mps.py` prints
   `[epoch N] … s` lines).
+- **Measured (Oct 27, run seed 33): 195 s/epoch** (train + val) on `mps`: 23,304 train windows (5.895 s, after IK
+  drops), 9,643 val; data loading keeps up. Cache: ~76 GB EMG + ~95 GB targets, built in ~35 min.
+  First run: `scripts/neuralbench_mps.py emg pose -m vemg2pose --subset configs/emg2pose_subset.json --seeds 33`,
+  started 13:06, launched in its own session (`start_new_session`): runs tied to Claude's task shell die with it.
+  epoch 0: val/mae 0.283 rad (16.2°, pooled val); 100 epochs ≤ 5.5 h.
 - Plan: at ≤10 min/epoch, the recipe's 100 epochs (patience 20) take ≤17 h: start the day the download ends,
   upload the best smoothed-held-out epoch to the warm-up before Nov 1. If an epoch is much slower,
   cap it with `--max-neuro-hours-per-epoch` or fewer epochs and upload an earlier checkpoint.
