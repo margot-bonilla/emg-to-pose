@@ -4,13 +4,17 @@ PIP := .venv/bin/pip
 # This repo's own NeuralBench config (data/, cache/, save/ here), independent of
 # ~/.neuralbench and of any other project: see scripts/neuralbench_config.py.
 export NEURALBENCH_CONFIG := $(CURDIR)/configs/neuralbench.local.json
+# benchopt's Salter2024Emg2pose reads $(BENCHOPT_DATA_HOME)/neural_compet, NeuralBench's
+# DATA_DIR: one copy of the data for both (never run `benchopt prepare` on it, see PLAN.md).
+export BENCHOPT_DATA_HOME := $(CURDIR)/data
 
-.PHONY: env env-create env-install neuralbench-config competition-repo starter zip-submission test-submission pause-training resume-training training-status clean help
+.PHONY: env env-create env-install neuralbench-config competition-repo starter download-subset zip-submission test-submission pause-training resume-training training-status clean help
 
 help:
 	@echo "Available commands:"
 	@echo "  make env              - Python 3.12 venv, dependencies, competition repo, NeuralBench config"
 	@echo "  make starter          - Zero-download contract check (official starter.yml: MeanPose on Simulated)"
+	@echo "  make download-subset  - EMG2Pose participants of configs/emg2pose_subset.json (~132 GB; run in your own terminal)"
 	@echo "  make zip-submission   - Package a submission folder for Codabench upload"
 	@echo "  make test-submission  - Zip, then run it read-only like Codabench does"
 	@echo "  make pause-training   - Freeze all training runs on this Mac, Track 1's too (frees the GPU; nothing is lost)"
@@ -42,6 +46,8 @@ neuralbench-config:
 	$(PYTHON) scripts/neuralbench_config.py
 	@grep -q NEURALBENCH_CONFIG .venv/bin/activate || \
 		echo 'export NEURALBENCH_CONFIG="$(NEURALBENCH_CONFIG)"' >> .venv/bin/activate
+	@grep -q BENCHOPT_DATA_HOME .venv/bin/activate || \
+		echo 'export BENCHOPT_DATA_HOME="$(BENCHOPT_DATA_HOME)"' >> .venv/bin/activate
 
 # Official competition repo: provides benchmark_utils, the scoring objective and
 # the datasets used by Codabench. Kept out of git (see .gitignore).
@@ -54,6 +60,13 @@ competition-repo:
 starter: competition-repo
 	cd $(COMPET_REPO) && PATH="$(CURDIR)/.venv/bin:$$PATH" \
 		benchopt run $(TRACK) --config $(TRACK)/starter.yml --no-plot --no-cache
+
+# Only the participants listed in configs/emg2pose_subset.json (scripts/pick_subjects.py):
+# the NeuralBench CLI with their `subject in [...]` query. Idempotent: re-run to resume.
+SUBSET ?= configs/emg2pose_subset.json
+
+download-subset:
+	$(PYTHON) scripts/neuralbench_mps.py emg pose --subset $(SUBSET) --download
 
 # Folder holding submission.py + its weights/artifacts, e.g. make test-submission SUBMISSION=submissions/<name>
 # Every file in it goes into the ZIP except run_config* (kept for the audit) and dotfiles.

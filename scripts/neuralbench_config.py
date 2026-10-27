@@ -6,6 +6,11 @@ before falling back to the global ~/.neuralbench/config.json. The Makefile and
 its own data/, cache/ and save/ and never depends on another project's config
 (e.g. Track 1 on the same Mac). ~/.neuralbench is never read or written.
 
+DATA_DIR is data/neural_compet: benchopt's Salter2024Emg2pose reads
+get_data_path("neural_compet") = $BENCHOPT_DATA_HOME/neural_compet, and the Makefile
+and .venv/bin/activate export BENCHOPT_DATA_HOME=<repo>/data, so NeuralBench, benchopt
+and scripts/eval_local.py share one copy of the data.
+
 CLUSTER is null: everything runs locally, in-process (no Slurm, and no exca
 subprocess where patches such as the Mac GPU one would not apply).
 
@@ -36,7 +41,7 @@ if __name__ == "__main__":
         "USER": user,
         "ENTITY_NAME": user,
         "PROJECT_NAME": "neuralbench",
-        "DATA_DIR": str(REPO / "data"),
+        "DATA_DIR": str(REPO / "data" / "neural_compet"),
         "CACHE_DIR": str(REPO / "cache"),
         "SAVE_DIR": str(REPO / "save"),
         "WANDB_HOST": "",
