@@ -4,7 +4,7 @@ Team **fireflies** · Official repo: [neural-interfaces26/2026-competition](http
 [NeuralBench Track 4 guide](https://facebookresearch.github.io/neuroai/neuralbench/auto_examples/biosignal_challenge_2026/plot_track4_emg_to_pose.html) ·
 Workshop: NeurIPS 2026 Brain & Body Workshop
 
-Start here: [`docs/handoff_track4_emg_pose.md`](docs/handoff_track4_emg_pose.md) (rules, contract, lessons from Track 1), then [`PLAN.md`](PLAN.md).
+Start here: [`PLAN.md`](PLAN.md) (rules, lessons from Track 1, data, experiments), then [`RESULTS.md`](RESULTS.md) (every upload, local vs Codabench).
 
 ---
 
@@ -45,7 +45,7 @@ Makefile              env, contract checks, packaging, training pause/resume
 requirements.txt      pinned to the Codabench worker stack
 PLAN.md               plan and milestones up to the sealed phase
 RESULTS.md            one row per upload (commit, command, local and Codabench scores)
-docs/                 handoff and write-ups
+docs/                 write-ups
 scripts/              setup, training and evaluation tools (train_solver.py, eval_local.py, ...)
 src/data/             window cache, held-out split
 src/models/           model code shared by the submissions

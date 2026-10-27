@@ -12,6 +12,26 @@ Goal: 2–3 well-tested candidates ready by **Nov 4**, selected on a held-out sp
 | Nov 2–4 | No uploads: final retrains and contract checks |
 | Nov 5 → Nov 21, 23:59 CET | Sealed phase: 5 uploads per person in total |
 
+## Rules and lessons (moved from the Track 1 handoff doc, Oct 27)
+
+**Competition:** sealed uploads are 5 per person per track **in total**, and failed uploads still use a slot:
+always `make test-submission` first (ZIP = `submission.py` + weights at its root, `run_config*` stays out).
+Top 3 get a reproducibility audit: the organisers retrain from the committed code + config and must land within
+±2σ, so PRs are merged with merge commits only (RESULTS.md and `run_config.json` cite exact commits). Codabench
+had a multi-day outage around Oct 22: check that an upload was actually scored. Official Track 4 pages:
+`codabench/pages/competition_emg.md`, `codabench/pages/scientific_faq_emg.md` in the competition repo.
+
+**Track 1 lessons still to apply here:**
+- More participants was the biggest lever for unseen people (+3.6 points per doubling): measure the curve.
+- Per-window normalisation helped unseen people a lot on one dataset (+4 points), not on another: test it early.
+- Models peak much earlier on unseen people; a final retrain without validation needs a fixed epoch count taken
+  from the smoothed held-out curves. Seed ensembles added 2–3 points and survive the audit better.
+- Foundation models: fine-tune, don't just probe; see `neuralbench/defaults/downstream_wrappers.yaml`.
+- Cache windows before training (~4× faster on Track 1; here NeuralBench's cache already keeps up at 195 s/epoch).
+- The lid closed puts macOS to sleep despite `caffeinate`: keep it open for overnight runs. The screen blinking
+  means the GPU is at ~97%: `make pause-training`, don't restart.
+- Never edit a running bash queue script (bash reads it as it goes); replace imported Python modules atomically.
+
 ## Constraints
 
 - **GPU:** Track 1 has priority on Margot's Mac, especially at night. Run `make training-status`
@@ -28,7 +48,7 @@ Goal: 2–3 well-tested candidates ready by **Nov 4**, selected on a held-out sp
 |---|---|---|---|
 | 1 ✅ | Oct 22 | `make env`, official repo, `make starter` | `starter.yml` (MeanPose on Simulated) passes: 20.8° on Simulated |
 | 2 | Oct 27–28 | EMG2Pose subset (75 participants, ~132 GB, see below): `make download-subset`, then `--prepare` | the `emg/pose` task loads a train and a test batch |
-| 3 | Oct 27–Nov 1 | `scripts/eval_local.py` ✅ (written, untested until data lands) + NeuralBench VEMG2Pose on the subset (`scripts/neuralbench_mps.py`, `scripts/package_vemg2pose.py` ✅) | one warm-up upload where local MAE = Codabench MAE; then delete `docs/handoff_track4_emg_pose.md` (its useful parts live in README/PLAN) |
+| 3 ✅ | Oct 27 | `scripts/eval_local.py` + NeuralBench VEMG2Pose on the subset (`scripts/neuralbench_mps.py`, `scripts/package_vemg2pose.py` ✅) | one warm-up upload where local MAE = Codabench MAE; then delete `docs/handoff_track4_emg_pose.md` (its useful parts live in README/PLAN) | **Done Oct 27:** floor 22.6283 local / 22.63 Codabench; VEMG2Pose epoch 1 18.5202 / 18.52 |
 | 4 ✅ | Oct 27 | Held-out split = the paper's val users × held-out stages (`eval_local.py --split heldout`) | every run reports a held-out MAE |
 | 5 | Oct 26–28 | Window cache, `scripts/train_solver.py`, `submission/submission.py` with per-epoch checkpoints, `--resume` and smoothed early stopping | a restartable run that exports an upload-ready folder with `run_config.json` |
 | 6 | Oct 28 – Nov 1 | Experiments on held-out (list below) | a recipe that clearly beats the baseline on held-out |
@@ -39,7 +59,7 @@ Sealed phase: upload 2–3 very different candidates early, refine what wins, en
 ## Warm-up uploads
 
 - Oct 27: `dist/meanpose_floor.zip` (official MeanPose verbatim; with no weights it predicts the all-zero pose): **22.63°** on Codabench (#1012775). Registration and upload path OK; `eval_local.py --split test` must reproduce 22.63.
-- Next: VEMG2Pose on the subset, once `eval_local.py --split test` gives its local score (it must match Codabench).
+- Oct 27: `dist/vemg2pose_s33_ep001.zip` (VEMG2Pose, subset, seed 33, epoch 1): **18.52°** on Codabench (#1013210) = local 18.5202.
 
 ## Held-out split (milestone 4)
 
