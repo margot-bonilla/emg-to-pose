@@ -59,6 +59,13 @@ Track 1's `configs/heldout_*.json`) so every run uses the same one.
 
 ## Experiments (milestone 6), in rough order of expected value
 
+**Where we stand (Oct 27, VEMG2Pose seed 33, epochs 0–9, held-out = val users × held-out stages, per-subject MAE):**
+constant train-mean pose 19.50° (test 19.16°); VEMG2Pose 18.4–20.0° per epoch, best smoothed 18.79° (epoch 5), and
+R² < 0 throughout, while NeuralBench's pooled val (mostly seen stages) keeps improving. So the model barely transfers to
+unseen stages: everything below should be judged on held-out only. Cheap finishing touch: shrink predictions toward the
+train mean, `mean + α (pred − mean)`; α = 0.75 gains 0.1–0.2° on held-out (epochs 4, 5, 9). Choose α on held-out.
+
+
 1. ~~**Train on 5 s windows without left context.**~~ Measured Oct 27 (`scripts/diag_left_context.py`, epoch 7, held-out): real context 19.32° vs the template's reflection padding 19.07°, so no loss; low priority. The gap that matters is unseen stages: ~15° on NeuralBench's pooled val (mostly seen stages) vs ~19° held-out.
    Original idea: NeuralBench's VEMG2Pose trains on 5.895 s windows
    (1,790 samples of left context); Codabench gives exactly 5 s, so the official template pads by
