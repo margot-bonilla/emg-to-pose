@@ -59,7 +59,8 @@ Track 1's `configs/heldout_*.json`) so every run uses the same one.
 
 ## Experiments (milestone 6), in rough order of expected value
 
-1. **Train on 5 s windows without left context.** NeuralBench's VEMG2Pose trains on 5.895 s windows
+1. ~~**Train on 5 s windows without left context.**~~ Measured Oct 27 (`scripts/diag_left_context.py`, epoch 7, held-out): real context 19.32° vs the template's reflection padding 19.07°, so no loss; low priority. The gap that matters is unseen stages: ~15° on NeuralBench's pooled val (mostly seen stages) vs ~19° held-out.
+   Original idea: NeuralBench's VEMG2Pose trains on 5.895 s windows
    (1,790 samples of left context); Codabench gives exactly 5 s, so the official template pads by
    reflection. Training on the evaluated format should remove that train/test mismatch.
 2. **Normalisation:** per-window and per-channel normalisation of the raw µV (amplitude depends on
