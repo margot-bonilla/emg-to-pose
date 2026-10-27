@@ -7,7 +7,9 @@ Adapted from ../egg-to-image/scripts/eval_local.py (copied, not shared). Loads e
 folder's submission.py + weights the way the platform does (``Solver.load_model(meta)``),
 feeds it the competition's own data pipeline (benchmark_utils.nb_task.load_task) and
 scores it with the official objective (tracks/emg_pose/objective.py). Key metric:
-``angular_mae`` in degrees, **lower is better**. With several folders it also scores
+``angular_mae_subject_mean`` in degrees (mean over subjects of each one's MAE), **lower is
+better**: it is the Score Codabench shows (MeanPose floor: 22.6283 here, 22.63 there), not
+the pooled ``angular_mae`` (22.6666). With several folders it also scores
 their ensemble (mean of the predicted angles).
 
 Splits:
@@ -38,7 +40,7 @@ import torch
 
 REPO = Path(__file__).resolve().parent.parent
 TRACK = REPO / "external/2026-competition/tracks/emg_pose"
-METRICS = ["angular_mae", "angular_mae_subject_mean", "angular_mae_subject_std", "angular_rmse",
+METRICS = ["angular_mae_subject_mean", "angular_mae", "angular_mae_subject_std", "angular_rmse",
            "r2_score", "n_subjects"]
 SMOOTH = 3
 
@@ -89,8 +91,8 @@ def heldout_loader(val_loader, batch_size):
     return _DeviceLoader(loader, val_loader.device)
 
 
-def score(objective, loader, model, n_joints, meta):
-    objective.set_data(train_loader=None, test_loader=loader, n_joints=n_joints, **meta)
+def score(objective, loader, model, meta):
+    objective.set_data(train_loader=None, test_loader=loader, **meta)  # meta has n_joints
     return objective.evaluate_result(model)
 
 
@@ -108,16 +110,23 @@ def main():
     sys.path.insert(0, str(TRACK))
     from benchmark_utils.nb_task import load_task
 
+    subset = json.loads(args.subset.read_text())
+    query = subset["query"]
+    if args.split == "test":
+        # The test users alone, plus one val and one train user: NeuralBench 0.4.0's
+        # Data.prepare refuses an empty split (so nb_task's subset="test" fails), and
+        # this avoids extracting the whole subset. The test windows don't depend on them.
+        roles = subset["roles"]
+        labels = roles["test"]["subjects"] + roles["val"]["subjects"][:1] + roles["train"]["subjects"][:1]
+        query = f"subject in {[f'Salter2024Emg2pose/{s}' for s in labels]!r}"
     config = json.loads(Path(os.environ["NEURALBENCH_CONFIG"]).read_text())
     cache = config["CACHE_DIR"]
     device = "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu"
     loaders, meta = load_task(
         "emg", "pose", data_dir=config["DATA_DIR"], device=device, batch_size=args.batch_size,
         num_workers=args.num_workers,
-        # The test split alone, like the Codabench worker; heldout/val need the full pipeline.
-        subset="test" if args.split == "test" else "full",
         overrides={
-            "study.source.query": json.loads(args.subset.read_text())["query"],
+            "study.source.query": query,
             "study.source.infra.folder": cache,
             "neuro.infra.folder": cache,
             "target.infra.folder": cache,
@@ -150,8 +159,8 @@ def main():
     print(f"{'model':<{width}}" + "".join(f"{m:>26}" for m in columns))
     history = []
     for name, model in models.items():
-        result = score(objective, loader, model, n_joints, meta)
-        history.append(result["angular_mae"])
+        result = score(objective, loader, model, meta)
+        history.append(result["angular_mae_subject_mean"])
         row = [f"{result[m]:>26.4f}" if m != "n_subjects" else f"{int(result[m]):>26d}" for m in METRICS]
         if args.epochs:
             row.append(f"{np.mean(history[-SMOOTH:]):>26.4f}")

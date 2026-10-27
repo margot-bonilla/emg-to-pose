@@ -109,6 +109,19 @@ That makes 75 participants, ~132 GB raw (0.80 GB per recorded hour), plus the ex
 - Windows in the subset (upper bounds before IK drops): train 49k (73 h), val 22k (33 h), held-out 3.7k,
   warm-up test 5.1k.
 
+### NEMAR joint-angle units (found Oct 27, fixed on disk)
+
+Every nm000281 BDF stores the 20 joint angles in **micro-radians**. Old files label them `uV` (MNE divides by
+1e6, so radians: what NeuralBench, VEMG2Pose and Codabench use); files re-uploaded since label them `rad`
+without rescaling, so they read **1e6 too large**. That was 94% of our download (mixed even within a subject:
+NEMAR is mid re-upload). `scripts/fix_bdf_joint_units.py` rewrites those headers' unit field to `uV` (samples
+untouched, 9,373 files, every change in `download/nm000281/joint_unit_fix.csv`, idempotent). Run it after
+**every** download, then delete any target cache built before. 142 files with a 0..1 placeholder range
+(all-zero, fully `BAD_IK`) are left alone: their windows are dropped. Worth reporting to NEMAR / the organisers.
+
+After the fix, `eval_local.py submissions/meanpose_floor --split test` = **22.6283** per-subject mean
+(Codabench 22.63). The Codabench Score is `angular_mae_subject_mean`, not the pooled `angular_mae` (22.6666).
+
 ### VEMG2Pose time per epoch on `mps`
 
 - Synthetic estimate (Oct 27): 6.0 M parameters; 0.27 s per training batch of 64 × 16 × 11,790 and 0.05 s per eval
