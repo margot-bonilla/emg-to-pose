@@ -38,7 +38,7 @@ Sealed phase: upload 2–3 very different candidates early, refine what wins, en
 
 ## Warm-up uploads
 
-- Oct 27: `dist/meanpose_floor.zip` (official MeanPose verbatim; with no weights it predicts the all-zero pose). Only checks the registration and the upload path.
+- Oct 27: `dist/meanpose_floor.zip` (official MeanPose verbatim; with no weights it predicts the all-zero pose): **22.63°** on Codabench (#1012775). Registration and upload path OK; `eval_local.py --split test` must reproduce 22.63.
 - Next: VEMG2Pose on the subset, once `eval_local.py --split test` gives its local score (it must match Codabench).
 
 ## Held-out split (milestone 4)
