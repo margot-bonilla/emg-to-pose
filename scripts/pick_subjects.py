@@ -57,7 +57,8 @@ def main():
             "subjects": [label_of[u] for u in users[role]],
             "est_gb": round(float(hours[users[role]].sum() * GB_PER_HOUR), 1),
         }
-    subjects = sorted(s for r in roles.values() for s in r["subjects"])
+    # The study's events label subjects "<Study>/<label>"; its downloader strips the prefix.
+    subjects = sorted(f"Salter2024Emg2pose/{s}" for r in roles.values() for s in r["subjects"])
     out = {
         "description": f"all test + all val users, {args.n_train} random train users (seed {args.seed})",
         "seed": args.seed,

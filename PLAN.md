@@ -105,6 +105,7 @@ That makes 75 participants, ~132 GB raw (0.80 GB per recorded hour), plus the ex
 - One copy of the data: NeuralBench `DATA_DIR = data/neural_compet`, and `BENCHOPT_DATA_HOME = <repo>/data`
   (Makefile + `.venv/bin/activate`) makes benchopt's `get_data_path("neural_compet")` the same folder.
   Caches: NeuralBench's `cache/`, reused by `eval_local.py`.
+- Download done Oct 27 (126 GB, ~1 h at ~35 MB/s); `scripts/check_subset.py`: 9,819 recordings for 75 participants = the metadata (test user_stage 456, val user_stage 332, train 4,335). The query must name subjects `Salter2024Emg2pose/<label>`.
 - Windows in the subset (upper bounds before IK drops): train 49k (73 h), val 22k (33 h), held-out 3.7k,
   warm-up test 5.1k.
 
