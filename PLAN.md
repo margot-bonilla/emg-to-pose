@@ -17,7 +17,7 @@ Goal: 2–3 well-tested candidates ready by **Nov 4**, selected on a held-out sp
 **Competition:** sealed uploads are 5 per person per track **in total**, and failed uploads still use a slot:
 always `make test-submission` first (ZIP = `submission.py` + weights at its root, `run_config*` stays out).
 Top 3 get a reproducibility audit: the organisers retrain from the committed code + config and must land within
-±2σ, so PRs are merged with merge commits only (RESULTS.md and `run_config.json` cite exact commits). Codabench
+±2σ, so history is never rewritten (no squash, rebase or force-push: RESULTS.md and `run_config.json` cite exact commits). Codabench
 had a multi-day outage around Oct 22: check that an upload was actually scored. Official Track 4 pages:
 `codabench/pages/competition_emg.md`, `codabench/pages/scientific_faq_emg.md` in the competition repo.
 
@@ -37,8 +37,8 @@ had a multi-day outage around Oct 22: check that an upload was actually scored. 
 - **GPU:** Track 1 has priority on Margot's Mac, especially at night. Run `make training-status`
   (lists every run on the Mac) before any GPU job; never run two trainings at once.
 - **No dependency on Track 1:** own config, data and caches (duplicated if needed); files are copied, never linked.
-- **Workflow:** push directly to `main` until the structure is settled and the first end-to-end
-  (milestone 3) works; pull requests after that (merge commits only, for the audit). Heavy Track 4 training belongs on Enrique's Mac or in daytime gaps.
+- **Workflow:** push directly to `main`, no PRs (decided Oct 27: two of us, no reviewers); never rewrite history.
+  Heavy Track 4 training belongs on Enrique's Mac or in daytime gaps.
 - **Downloads:** Margot runs them in her own terminal.
 - **Disk:** 999 GB free (Oct 27), shared with Track 1's caches.
 
