@@ -7,6 +7,10 @@ export NEURALBENCH_CONFIG := $(CURDIR)/configs/neuralbench.local.json
 # benchopt's Salter2024Emg2pose reads $(BENCHOPT_DATA_HOME)/neural_compet, NeuralBench's
 # DATA_DIR: one copy of the data for both (never run `benchopt prepare` on it, see PLAN.md).
 export BENCHOPT_DATA_HOME := $(CURDIR)/data
+# The fbcode Python 3.12 looks for CA certificates in /etc/pki/tls (Linux), absent on macOS:
+# urllib then fails with CERTIFICATE_VERIFY_FAILED (e.g. EMG2Pose's BIDS sidecars from NEMAR).
+# certifi's bundle fixes it; an SSL_CERT_FILE already set wins.
+export SSL_CERT_FILE ?= $(shell $(PYTHON) -m certifi 2>/dev/null)
 
 .PHONY: env env-create env-install neuralbench-config competition-repo starter download-subset zip-submission test-submission pause-training resume-training training-status clean help
 
@@ -48,6 +52,8 @@ neuralbench-config:
 		echo 'export NEURALBENCH_CONFIG="$(NEURALBENCH_CONFIG)"' >> .venv/bin/activate
 	@grep -q BENCHOPT_DATA_HOME .venv/bin/activate || \
 		echo 'export BENCHOPT_DATA_HOME="$(BENCHOPT_DATA_HOME)"' >> .venv/bin/activate
+	@grep -q SSL_CERT_FILE .venv/bin/activate || \
+		echo 'export SSL_CERT_FILE="$${SSL_CERT_FILE:-$$(python -m certifi)}"' >> .venv/bin/activate
 
 # Official competition repo: provides benchmark_utils, the scoring objective and
 # the datasets used by Codabench. Kept out of git (see .gitignore).
