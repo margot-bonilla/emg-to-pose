@@ -2,7 +2,7 @@
 
 One row per Codabench upload. Needed to pick the best model, and for the reproducibility audit (commit + config + command must reproduce the weights).
 
-The Codabench Score is the **mean over subjects of the angular MAE in degrees** (`angular_mae_subject_mean`, lower is better). Compare models locally (`scripts/eval_local.py`, once it exists) before spending an upload. **Budget:** warm-up uploads are free (daily quota) but don't count; **sealed phase: 5 uploads per person in total**, team's best on the leaderboard.
+The official sealed ranking metric is the **pooled mean angular MAE in degrees** (`angular_mae`, over all windows × joints × time; lower is better). The "Score" shown in My Submissions is the per-subject mean (`angular_mae_subject_mean`); both are logged below where known. Compare models locally (`scripts/eval_local.py`, once it exists) before spending an upload. **Budget:** warm-up uploads are free (daily quota) but don't count; **sealed phase: 5 uploads per person in total**, team's best on the leaderboard.
 
 | Date | Who | Phase | Commit | Model / config | Command to reproduce | Held-out MAE (°) | Local test MAE (°) | Codabench MAE (°) | Notes |
 |---|---|---|---|---|---|---|---|---|---|

@@ -7,9 +7,10 @@ Adapted from ../egg-to-image/scripts/eval_local.py (copied, not shared). Loads e
 folder's submission.py + weights the way the platform does (``Solver.load_model(meta)``),
 feeds it the competition's own data pipeline (benchmark_utils.nb_task.load_task) and
 scores it with the official objective (tracks/emg_pose/objective.py). Key metric:
-``angular_mae_subject_mean`` in degrees (mean over subjects of each one's MAE), **lower is
-better**: it is the Score Codabench shows (MeanPose floor: 22.6283 here, 22.63 there), not
-the pooled ``angular_mae`` (22.6666). With several folders it also scores
+``angular_mae`` in degrees, pooled over all windows, joints and time points, **lower is
+better**: the official sealed ranking metric (codabench/pages/competition_emg.md). The
+"Score" in Codabench's My Submissions is the per-subject mean ``angular_mae_subject_mean``
+(floor 22.6283 here = 22.63 there; VEMG2Pose 18.5202 = 18.52, 17.3681 = 17.37), shown second. With several folders it also scores
 their ensemble (mean of the predicted angles).
 
 Splits:
@@ -40,7 +41,7 @@ import torch
 
 REPO = Path(__file__).resolve().parent.parent
 TRACK = REPO / "external/2026-competition/tracks/emg_pose"
-METRICS = ["angular_mae_subject_mean", "angular_mae", "angular_mae_subject_std", "angular_rmse",
+METRICS = ["angular_mae", "angular_mae_subject_mean", "angular_mae_subject_std", "angular_rmse",
            "r2_score", "n_subjects"]
 SMOOTH = 3
 
@@ -160,7 +161,7 @@ def main():
     history = []
     for name, model in models.items():
         result = score(objective, loader, model, meta)
-        history.append(result["angular_mae_subject_mean"])
+        history.append(result["angular_mae"])
         row = [f"{result[m]:>26.4f}" if m != "n_subjects" else f"{int(result[m]):>26d}" for m in METRICS]
         if args.epochs:
             row.append(f"{np.mean(history[-SMOOTH:]):>26.4f}")

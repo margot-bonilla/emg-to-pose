@@ -32,6 +32,11 @@ had a multi-day outage around Oct 22: check that an upload was actually scored. 
   means the GPU is at ~97%: `make pause-training`, don't restart.
 - Never edit a running bash queue script (bash reads it as it goes); replace imported Python modules atomically.
 
+**From the official pages (Oct 27):** label-free test-time adaptation inside the current batch is allowed, gradient updates
+included (no labels, no reliance on row order or state across calls); inference must finish in 60 min on one A100; 15 GB
+submission storage per profile; public external EMG data (e.g. NinaPro) allowed if declared; the sealed cohort has stages
+outside the 29 public ones. Each participant has their own upload quota, ranked as the team.
+
 ## Constraints
 
 - **GPU:** Track 1 has priority on Margot's Mac, especially at night. Run `make training-status`
@@ -166,7 +171,8 @@ untouched, 9,373 files, every change in `download/nm000281/joint_unit_fix.csv`, 
 (all-zero, fully `BAD_IK`) are left alone: their windows are dropped. Worth reporting to NEMAR / the organisers.
 
 After the fix, `eval_local.py submissions/meanpose_floor --split test` = **22.6283** per-subject mean
-(Codabench 22.63). The Codabench Score is `angular_mae_subject_mean`, not the pooled `angular_mae` (22.6666).
+(Codabench 22.63). The My Submissions "Score" is the per-subject mean `angular_mae_subject_mean`; the **official ranking
+metric is the pooled `angular_mae`** (codabench/pages/competition_emg.md): select on the pooled value (`eval_local.py` does, since Oct 27).
 
 ### VEMG2Pose time per epoch on `mps`
 
