@@ -38,7 +38,12 @@ case "${1:-status}" in
       echo "$(basename "$cwd"): $out: $([[ $state == T* ]] && echo PAUSED || echo running), started $(ps -o lstart= -p "$main")"
       log=$(ls -t "$cwd"/logs/"$(basename "$out")"_train.log 2>/dev/null | head -1)
       [ -n "$log" ] && grep "^epoch" "$log" | tail -1
-      [[ $cmd == *neuralbench_mps.py* ]] && grep -h "^\[epoch" "$cwd"/logs/neuralbench_*.log 2>/dev/null | tail -1
+      # Its own log: logs/neuralbench_*s<seed>.log (scripts/detach.py naming), else the newest.
+      if [[ $cmd == *neuralbench_mps.py* ]]; then
+        seed=$(echo "$cmd" | sed -n 's/.*--seeds \([0-9]*\).*/\1/p')
+        f=$(ls -t "$cwd"/logs/neuralbench_*${seed:+s$seed}.log "$cwd"/logs/neuralbench_*.log 2>/dev/null | head -1)
+        [ -n "$f" ] && grep "^\[epoch" "$f" | tail -1
+      fi
     done
     ;;
   *) echo "usage: $0 pause | resume | status"; exit 1 ;;
