@@ -93,6 +93,9 @@ Ensemble of the two seeds' best epochs (s33 e10 + s34 e9): **18.20°** vs 18.52 
 users (the 40 + 60 new, `pick_subjects.py --keep`), 17,908 recordings (11,075 train) verified by `check_subset.py`.
 Run: `scripts/detach.py logs/neuralbench_vemg2pose_u100_s33.log -- .venv/bin/python scripts/neuralbench_mps.py emg pose
 -m vemg2pose --subset configs/emg2pose_subset_100.json --seeds 33`. Compare its smoothed held-out curve with s33/s34 (40 users).
+**Result (epochs 0–15):** best smoothed held-out **17.80°** (epoch 12) vs 18.44 / 18.64 with 40 users, every epoch since 6
+below the 40-user best; R² −0.02 to −0.05. More users is the strongest lever so far (as on Track 1): next, all 158
+train users (~+105 GB). Candidate `submissions/vemg2pose_u100_s33_ep012`: local warm-up **17.37°** (NeuroPose ref. 17.5).
 
 
 1. ~~**Train on 5 s windows without left context.**~~ Measured Oct 27 (`scripts/diag_left_context.py`, epoch 7, held-out): real context 19.32° vs the template's reflection padding 19.07°, so no loss; low priority. The gap that matters is unseen stages: ~15° on NeuralBench's pooled val (mostly seen stages) vs ~19° held-out.
