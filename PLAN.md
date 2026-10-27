@@ -98,6 +98,11 @@ Run: `scripts/detach.py logs/neuralbench_vemg2pose_u100_s33.log -- .venv/bin/pyt
 below the 40-user best; R² −0.02 to −0.05. More users is the strongest lever so far (as on Track 1): next, all 158
 train users (~+105 GB). Candidate `submissions/vemg2pose_u100_s33_ep012`: local warm-up **17.37°** (NeuroPose ref. 17.5).
 
+**Next (Oct 27): all 158 train users** (`configs/emg2pose_subset_158.json` = all 193 participants, ~339 GB raw):
+`make download-subset SUBSET=configs/emg2pose_subset_158.json`, then the same run with that subset.
+**Final retrain (Nov 2–4), not measurable on held-out:** all 193 users × all 29 stages (add the train users' held-out-stage
+recordings, which the task drops, and the val/test users), fixed epoch count from the smoothed held-out curves.
+
 
 1. ~~**Train on 5 s windows without left context.**~~ Measured Oct 27 (`scripts/diag_left_context.py`, epoch 7, held-out): real context 19.32° vs the template's reflection padding 19.07°, so no loss; low priority. The gap that matters is unseen stages: ~15° on NeuralBench's pooled val (mostly seen stages) vs ~19° held-out.
    Original idea: NeuralBench's VEMG2Pose trains on 5.895 s windows
