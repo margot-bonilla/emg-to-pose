@@ -69,10 +69,15 @@ starter: competition-repo
 
 # Only the participants listed in configs/emg2pose_subset.json (scripts/pick_subjects.py):
 # the NeuralBench CLI with their `subject in [...]` query. Idempotent: re-run to resume.
+# neuralfetch skips the whole download once its per-study success marker exists, even for
+# subjects added since: remove it first (eegdash still skips complete recordings).
 SUBSET ?= configs/emg2pose_subset.json
+SUCCESS_MARKER := data/neural_compet/Salter2024Emg2pose/download/eegdash_nm000281_success_download.txt
 
 download-subset:
+	rm -f $(SUCCESS_MARKER)
 	$(PYTHON) scripts/neuralbench_mps.py emg pose --subset $(SUBSET) --download
+	$(PYTHON) scripts/check_subset.py --subset $(SUBSET)
 
 # Folder holding submission.py + its weights/artifacts, e.g. make test-submission SUBMISSION=submissions/<name>
 # Every file in it goes into the ZIP except run_config* (kept for the audit) and dotfiles.
