@@ -89,6 +89,11 @@ train mean, `mean + α (pred − mean)`; α = 0.75 gains 0.1–0.2° on held-out
 single epochs swing 18.3–20.0°. So a change must move the *smoothed* held-out curve clearly below ~18.4° to count.
 Ensemble of the two seeds' best epochs (s33 e10 + s34 e9): **18.20°** vs 18.52 / 18.40 alone (−0.2 to −0.3°).
 
+**Participants (experiment 4), launched Oct 27 15:38:** `configs/emg2pose_subset_100.json` = same test/val users + 100 train
+users (the 40 + 60 new, `pick_subjects.py --keep`), 17,908 recordings (11,075 train) verified by `check_subset.py`.
+Run: `scripts/detach.py logs/neuralbench_vemg2pose_u100_s33.log -- .venv/bin/python scripts/neuralbench_mps.py emg pose
+-m vemg2pose --subset configs/emg2pose_subset_100.json --seeds 33`. Compare its smoothed held-out curve with s33/s34 (40 users).
+
 
 1. ~~**Train on 5 s windows without left context.**~~ Measured Oct 27 (`scripts/diag_left_context.py`, epoch 7, held-out): real context 19.32° vs the template's reflection padding 19.07°, so no loss; low priority. The gap that matters is unseen stages: ~15° on NeuralBench's pooled val (mostly seen stages) vs ~19° held-out.
    Original idea: NeuralBench's VEMG2Pose trains on 5.895 s windows
