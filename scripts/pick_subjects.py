@@ -1,7 +1,7 @@
 """Pick the EMG2Pose participants to download, and write configs/emg2pose_subset.json.
 
     python -I scripts/pick_subjects.py --metadata emg2pose_metadata.csv \
-        --participants participants.tsv [--n-train 40] [--seed 0]
+        --participants participants.tsv [--n-train 40] [--seed 0] [--keep FILE --out NEW]
 
 Inputs (small, fetched once in a terminal):
 - https://fb-ctrl-oss.s3.amazonaws.com/emg2pose/emg2pose_metadata.csv (the paper's splits)
@@ -11,7 +11,8 @@ Inputs (small, fetched once in a terminal):
 Keeps every test user (their user_stage recordings are the warm-up set, so local
 scores can match Codabench) and every val user (val user_stage = unseen users x
 unseen stages: what we select on and early-stop on), plus ``--n-train`` train users
-drawn at random. Sizes are estimated at 0.80 GB per recorded hour (340 GB / 424 h).
+drawn at random (``--keep FILE``: FILE's train users plus random others, so a larger
+subset contains the smaller one and its downloads). Sizes are estimated at 0.80 GB per recorded hour (340 GB / 424 h).
 
 The output lists BIDS labels per role and the study query, ``subject in [...]``,
 used by scripts/download_subset.py, scripts/neuralbench_mps.py and scripts/eval_local.py.
@@ -33,6 +34,7 @@ def main():
     parser.add_argument("--participants", type=Path, required=True)
     parser.add_argument("--n-train", type=int, default=40)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--keep", type=Path, default=None, help="subset file whose train users are kept")
     parser.add_argument("--out", type=Path, default=REPO / "configs" / "emg2pose_subset.json")
     args = parser.parse_args()
 
@@ -48,7 +50,9 @@ def main():
         lambda s: "train" if "train" in set(s) else "val" if "val" in set(s) else "test")
     users = {role: sorted(role_of.index[role_of == role]) for role in ("train", "val", "test")}
     rng = np.random.default_rng(args.seed)
-    users["train"] = sorted(rng.choice(users["train"], size=args.n_train, replace=False))
+    kept = json.loads(args.keep.read_text())["roles"]["train"]["users"] if args.keep else []
+    others = [u for u in users["train"] if u not in kept]
+    users["train"] = sorted(kept + list(rng.choice(others, size=args.n_train - len(kept), replace=False)))
 
     roles = {}
     for role in ("test", "val", "train"):
@@ -60,7 +64,8 @@ def main():
     # The study's events label subjects "<Study>/<label>"; its downloader strips the prefix.
     subjects = sorted(f"Salter2024Emg2pose/{s}" for r in roles.values() for s in r["subjects"])
     out = {
-        "description": f"all test + all val users, {args.n_train} random train users (seed {args.seed})",
+        "description": f"all test + all val users, {args.n_train} random train users (seed {args.seed})"
+                       + (f", keeping the train users of {args.keep.name}" if args.keep else ""),
         "seed": args.seed,
         "roles": roles,
         "est_gb": round(sum(r["est_gb"] for r in roles.values()), 1),

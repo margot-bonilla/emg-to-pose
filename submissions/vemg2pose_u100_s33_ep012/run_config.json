@@ -1,0 +1,11 @@
+{
+ "checkpoint": "save/neuralbench.main.Experiment.run,1/seed=33,task_name=pose,loss.name=L1Loss,brain_model_output_size=20,augmentation={num_bands=1,probability=1},brain_model_config={...497-c767dd08/epochs/epoch=012.ckpt",
+ "epoch": 12,
+ "repo_commit": "50fd49f345783da8f22126520bfac75f10739654",
+ "competition_commit": "a66bc23d1a0e686b895c093a642b45c74970758b",
+ "subset": "configs/emg2pose_subset_100.json",
+ "subset_sha1": "72c484d8b8f97dbc3efdf2a86692d90e0e61450c",
+ "command": "python scripts/detach.py logs/neuralbench_vemg2pose_u100_s33.log -- .venv/bin/python scripts/neuralbench_mps.py emg pose -m vemg2pose --subset configs/emg2pose_subset_100.json --seeds 33",
+ "train_commit": "2188cfe",
+ "selection": "best 3-epoch-smoothed held-out (val users x held-out stages) over epochs 0-15: epoch 12, 17.80 deg (single 17.86)"
+}
