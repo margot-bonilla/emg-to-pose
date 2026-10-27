@@ -89,8 +89,10 @@ def checkpoint_every_epoch() -> None:
         def on_train_epoch_start(self, trainer, module):
             self.t0 = time.perf_counter()
 
-        def on_validation_epoch_end(self, trainer, module):
-            if trainer.sanity_checking or not hasattr(self, "t0"):
+        # After validation: on_validation_epoch_end runs before the module logs that epoch's
+        # val metrics, so it would print the previous epoch's.
+        def on_train_epoch_end(self, trainer, module):
+            if not hasattr(self, "t0"):
                 return
             metrics = {k: float(v) for k, v in trainer.callback_metrics.items() if k.startswith("val/")}
             print(f"[epoch {trainer.current_epoch}] {time.perf_counter() - self.t0:.0f} s (train + val), "
