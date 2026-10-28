@@ -12,6 +12,32 @@ Goal: 2–3 well-tested candidates ready by **Nov 4**, selected on a held-out sp
 | Nov 2–4 | No uploads: final retrains and contract checks |
 | Nov 5 → Nov 21, 23:59 CET | Sealed phase: 5 uploads per person in total |
 
+## Road to the sealed phase (plan of Oct 28)
+
+**Goal:** the best score on the sealed 2026 cohort (new users, new stages incl. some outside the 29 public ones, possibly a
+different recording setup) *and* passing the audit (retrain from committed code + config within ±2σ). The warm-up only
+checks packaging (local = Codabench on 4 uploads).
+
+**Principles**
+1. **Two proxies for the sealed shift, not one:** held-out (val users × held-out stages) plus a **stressed held-out**: the same
+   windows with simulated recording shifts (electrode rotation ±1–2, per-channel gain ×0.5–2, noise, small time shifts).
+   A recipe must win on both; clean held-out alone rewards fitting EMG2Pose's own setup.
+2. **What we measured works, keep it:** more users (40 → 100 → 158: 18.4 → 17.3 → 16.8 held-out) and ensembles (one run's
+   snapshots −0.5°, mixing runs −0.4° more). Models peak early on unseen people (plateau from ~epoch 11–18).
+3. **Sealed uploads are our only signal on the real cohort:** 15 uploads (5 × 3 people). Spend them as controlled
+   comparisons (one factor at a time), keep spares for the end, never upload an untested ZIP (`make test-submission`).
+4. **Audit-ready by construction:** one command per ensemble member, fixed seeds and epoch counts, `run_config.json` per
+   submission, nothing Mac-only (must retrain on CUDA too), the NEMAR unit fix in the data pipeline.
+
+**Phases**
+| When | What | Done when |
+|---|---|---|
+| Oct 28–29 | `scripts/train_vemg2pose.py`: own loop on NeuralBench's cached windows (same data, same VEMG2Pose): per-epoch checkpoints + resume, cosine LR, EMA weights, augmentations (per-window band rotation, per-channel gain, noise, time shift), optional per-window normalisation (also in `submission.py`), all-data mode (all users × all stages, fixed epochs). Plus the stressed held-out in `eval_local.py` | a short run reproduces the NeuralBench baseline on held-out within noise; current ensembles scored on the stressed held-out |
+| Oct 29–31 | Experiments at 158 users, ~15 epochs (~2.5 h) each, judged on held-out + stressed held-out: (E1) augmentation, (E2) per-window normalisation, (E3) cosine LR + EMA, (E4) test-time adaptation per batch (eval-only, on E2 models) | a recipe chosen on Oct 31 |
+| Nov 1 | Last warm-up upload: the chosen recipe's packaging (local = Codabench) | match |
+| Nov 1–4 | Final training on **all 193 users × all 29 stages**, 3–5 seeds × fixed epochs (from the curves), ensembles of seeds × snapshots. ~6 h per seed: needs a second Mac or nights | 2–3 candidates: best recipe, a diverse variant, the safe current recipe on all data; audit commands written |
+| Nov 5–21 | Sealed uploads: day 1 best + safe (tells us how held-out transfers to the 2026 cohort), then single-factor comparisons (normalisation, TTA, shrinkage α), keep 3–4 for the last week | best on the leaderboard, audit pack ready |
+
 ## Rules and lessons (moved from the Track 1 handoff doc, Oct 27)
 
 **Competition:** sealed uploads are 5 per person per track **in total**, and failed uploads still use a slot:
