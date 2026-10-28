@@ -66,6 +66,7 @@ Sealed phase: upload 2–3 very different candidates early, refine what wins, en
 - Oct 27: `dist/meanpose_floor.zip` (official MeanPose verbatim; with no weights it predicts the all-zero pose): **22.63°** on Codabench (#1012775). Registration and upload path OK; `eval_local.py --split test` must reproduce 22.63.
 - Oct 27: `dist/vemg2pose_s33_ep001.zip` (VEMG2Pose, subset, seed 33, epoch 1): **18.52°** on Codabench (#1013210) = local 18.5202.
 - Oct 27: `dist/vemg2pose_u100_s33_ep012.zip` (VEMG2Pose, 100 train users, seed 33, epoch 12): **17.37°** on Codabench (#1013852) = local 17.3681.
+- Oct 28: `dist/vemg2pose_u100_s33_snap5.zip` (5-epoch snapshot ensemble, 100 users): **16.66°** on Codabench (#1015483) = local 16.6584 per-subject (16.54 pooled).
 
 ## Held-out split (milestone 4)
 
