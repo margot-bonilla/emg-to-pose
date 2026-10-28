@@ -103,6 +103,11 @@ Run: `scripts/detach.py logs/neuralbench_vemg2pose_u100_s33.log -- .venv/bin/pyt
 below the 40-user best; R² −0.02 to −0.05. More users is the strongest lever so far (as on Track 1): next, all 158
 train users (~+105 GB). Candidate `submissions/vemg2pose_u100_s33_ep012`: local warm-up **17.37°** (NeuroPose ref. 17.5).
 
+**100-user run, all 50 epochs (Oct 28):** held-out flat from epoch ~11 (pooled smoothed 17.30–17.75; best epoch 31, 17.30,
+within noise of epoch 12's 17.38): the model peaks early on unseen people. **Snapshot ensemble** of 5 epochs of that one run
+(12, 23, 31, 44, 49): **16.80 pooled** held-out vs 17.30–17.46 alone, **−0.5° for free**; local warm-up 16.54 pooled /
+16.66 per-subject (`submissions/vemg2pose_u100_s33_snap5`, `scripts/package_ensemble.py`). Keep every epoch checkpoint.
+
 **Next (Oct 27): all 158 train users** (`configs/emg2pose_subset_158.json` = all 193 participants, ~339 GB raw):
 `make download-subset SUBSET=configs/emg2pose_subset_158.json`, then the same run with that subset.
 **Final retrain (Nov 2–4), not measurable on held-out:** all 193 users × all 29 stages (add the train users' held-out-stage
