@@ -109,6 +109,11 @@ within noise of epoch 12's 17.38): the model peaks early on unseen people. **Sna
 (12, 23, 31, 44, 49): **16.80 pooled** held-out vs 17.30–17.46 alone, **−0.5° for free**; local warm-up 16.54 pooled /
 16.66 per-subject (`submissions/vemg2pose_u100_s33_snap5`, `scripts/package_ensemble.py`). Keep every epoch checkpoint.
 
+**158-user run (Oct 28, epochs 0–19):** pooled held-out smoothed **16.99** at epoch 19 and still dropping (100 users: 17.49
+at epoch 19, best 17.30 over 50). Ensembles on held-out (pooled): 5 checkpoints of the 158-user run (11, 14, 17, 18, 19)
+16.66; those + the 100-user 5 (10 members) **16.54** (mixing runs beats one run). Next candidate once the 158-user run
+plateaus (~epoch 30): best plateau checkpoints of both runs.
+
 **Next (Oct 27): all 158 train users** (`configs/emg2pose_subset_158.json` = all 193 participants, ~339 GB raw):
 `make download-subset SUBSET=configs/emg2pose_subset_158.json`, then the same run with that subset.
 **Final retrain (Nov 2–4), not measurable on held-out:** all 193 users × all 29 stages (add the train users' held-out-stage
