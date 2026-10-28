@@ -20,6 +20,10 @@ Splits:
   users AND unseen stages, like the sealed test. Select and early-stop on this.
 - ``val``: the whole val split (both val scenarios), what NeuralBench's ``val/mae`` pools.
 
+``--stress`` also scores each model under simulated recording shifts (``STRESS``: electrode
+rotation, per-channel and global gain, noise; fixed, seeded) and their mean: a second proxy for the
+sealed cohort (another setup), next to the clean score.
+
 ``--epochs DIR`` scores every ``*.ckpt`` in DIR (scripts/neuralbench_mps.py writes one per
 epoch) with the first folder's submission.py, and prints the score smoothed over the
 last 3 epochs: pick the epoch with the best smoothed score.
@@ -44,6 +48,33 @@ TRACK = REPO / "external/2026-competition/tracks/emg_pose"
 METRICS = ["angular_mae", "angular_mae_subject_mean", "angular_mae_subject_std", "angular_rmse",
            "r2_score", "n_subjects"]
 SMOOTH = 3
+
+
+def _channel_gains(n_chans):
+    return torch.exp(torch.empty(n_chans).uniform_(np.log(0.5), np.log(2.0),
+                                                   generator=torch.Generator().manual_seed(0)))
+
+
+# Simulated recording shifts for --stress: X (B, C, T) in microvolts -> shifted X.
+STRESS = {
+    "rot+1": lambda X: torch.roll(X, 1, dims=1),
+    "rot-1": lambda X: torch.roll(X, -1, dims=1),
+    "chan-gain": lambda X: X * _channel_gains(X.shape[1]).to(X.device)[None, :, None],
+    "gain x0.5": lambda X: X * 0.5,
+    "gain x2": lambda X: X * 2.0,
+    "noise 20%": lambda X: X + 0.2 * X.std(-1, keepdim=True) * torch.randn(
+        X.shape, generator=torch.Generator().manual_seed(0)).to(X.device),
+}
+
+
+class Stressed:
+    """A model fed shifted inputs."""
+
+    def __init__(self, model, shift):
+        self.model, self.shift = model, shift
+
+    def predict(self, X):
+        return self.model.predict(self.shift(X))
 
 
 def load_module(name, path):
@@ -104,9 +135,12 @@ def main():
     parser.add_argument("--subset", type=Path, default=REPO / "configs" / "emg2pose_subset.json")
     parser.add_argument("--epochs", type=Path, default=None, metavar="DIR",
                         help="score every *.ckpt in DIR with the first folder's submission.py")
+    parser.add_argument("--stress", action="store_true", help="also score under simulated recording shifts")
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--num-workers", type=int, default=0)
     args = parser.parse_args()
+    if args.stress and args.epochs:
+        parser.error("--stress and --epochs don't combine (the smoothing assumes one row per epoch)")
 
     sys.path.insert(0, str(TRACK))
     from benchmark_utils.nb_task import load_task
@@ -153,19 +187,29 @@ def main():
         if len(models) > 1:
             models[f"ensemble of {len(models)}"] = Ensemble(list(models.values()))
 
+    if args.stress:  # each model, then the same model under each shift
+        models = {f"{name}{suffix}": (model if not shift else Stressed(model, shift))
+                  for name, model in models.items()
+                  for suffix, shift in [("", None)] + [(f" | {k}", v) for k, v in STRESS.items()]}
+
     print(f"\n{args.split} split: {len(loader.dataset)} windows, {meta['n_chans']} channels x "
           f"{meta['n_times']} samples, device={device}\n")
     width = max(len(name) for name in models) + 2
     columns = METRICS + ([f"mae_smoothed{SMOOTH}"] if args.epochs else [])
     print(f"{'model':<{width}}" + "".join(f"{m:>26}" for m in columns))
     history = []
+    stressed = {}
     for name, model in models.items():
         result = score(objective, loader, model, meta)
+        if " | " in name:
+            stressed.setdefault(name.split(" | ")[0], []).append(result["angular_mae"])
         history.append(result["angular_mae"])
         row = [f"{result[m]:>26.4f}" if m != "n_subjects" else f"{int(result[m]):>26d}" for m in METRICS]
         if args.epochs:
             row.append(f"{np.mean(history[-SMOOTH:]):>26.4f}")
         print(f"{name:<{width}}" + "".join(row), flush=True)
+    for name, values in stressed.items():
+        print(f"stress mean (pooled) {name}: {np.mean(values):.4f} deg over {len(values)} shifts")
     if args.epochs and history:
         smoothed = [np.mean(history[max(0, i - SMOOTH + 1):i + 1]) for i in range(len(history))]
         best = int(np.argmin(smoothed))
