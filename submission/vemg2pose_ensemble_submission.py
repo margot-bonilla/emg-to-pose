@@ -3,6 +3,8 @@
 Same model, weight loading and left-context padding as the official template
 (tracks/emg_pose/submission_templates/neuralbench_vemg2pose_submission.py); this loads every
 ``weights_*.pt`` in the submission folder and averages the members' predictions (radians).
+A member trained by scripts/train_vemg2pose.py with ``--norm window`` carries
+``hparams = {"norm": "window"}``: its windows are standardised per channel first, as in training.
 Built by scripts/package_ensemble.py, which records the members' checkpoints in
 ``run_config.json`` (kept out of the ZIP).
 """
@@ -18,7 +20,8 @@ LEFT_CONTEXT = 1_790
 
 
 def _load_neuralbench_weights(module, path, device):
-    """Load only the brain model from a NeuralBench or plain checkpoint (as the template)."""
+    """Load only the brain model from a NeuralBench or plain checkpoint (as the template);
+    return the checkpoint's ``hparams`` (empty for NeuralBench checkpoints)."""
     checkpoint = torch.load(path, map_location=device, weights_only=True)
     state = checkpoint.get("state_dict", checkpoint)
     expected = module.state_dict()
@@ -30,23 +33,29 @@ def _load_neuralbench_weights(module, path, device):
     if missing:
         raise RuntimeError(f"{path.name} does not match VEMG2Pose. Missing keys: {missing}")
     module.load_state_dict(state, strict=True)
+    return checkpoint.get("hparams") or {}
 
 
 class VEMG2PoseEnsemble:
     def __init__(self, paths, n_chans, n_joints, sfreq, device):
         self.device = device
-        self.nets = []
+        self.nets, self.norms = [], []
         for path in paths:
             net = VEMG2Pose(n_chans=n_chans, n_times=TRAIN_N_TIMES, n_outputs=n_joints, sfreq=sfreq).to(device)
-            _load_neuralbench_weights(net, path, device)
+            hparams = _load_neuralbench_weights(net, path, device)
             self.nets.append(net.eval())
+            self.norms.append(hparams.get("norm", "none"))
 
     @torch.inference_mode()
     def predict(self, X):
         X = X.to(self.device, dtype=torch.float32)
         mode = "reflect" if X.shape[-1] > LEFT_CONTEXT else "replicate"
         X = F.pad(X, (LEFT_CONTEXT, 0), mode=mode)
-        prediction = torch.stack([net(X) for net in self.nets]).mean(0)  # (B, T, joints), radians
+        normed = None
+        if "window" in self.norms:  # per window and channel, over the padded window as in training
+            normed = (X - X.mean(-1, keepdim=True)) / (X.std(-1, keepdim=True) + 1e-6)
+        prediction = torch.stack([net(normed if norm == "window" else X)
+                                  for net, norm in zip(self.nets, self.norms)]).mean(0)  # (B, T, joints)
         return prediction.transpose(1, 2)  # (B, joints, T), radians
 
 

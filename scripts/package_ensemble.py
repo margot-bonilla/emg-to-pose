@@ -40,8 +40,10 @@ def main():
         state = {k: v for k, v in checkpoint.get("state_dict", checkpoint).items() if k.startswith("model.")}
         if not state:
             raise SystemExit(f"no model.* weights in {path}")
-        torch.save({"state_dict": state}, args.out / f"weights_{i:02d}.pt")
-        members.append({"file": f"weights_{i:02d}.pt", "checkpoint": relative(path), "epoch": checkpoint.get("epoch")})
+        hparams = checkpoint.get("hparams") or {}
+        torch.save({"state_dict": state, "hparams": hparams}, args.out / f"weights_{i:02d}.pt")
+        members.append({"file": f"weights_{i:02d}.pt", "checkpoint": relative(path), "epoch": checkpoint.get("epoch"),
+                        "norm": hparams.get("norm", "none")})
     run_config = {
         "members": members,
         "repo_commit": git_commit(REPO),

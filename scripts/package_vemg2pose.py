@@ -51,6 +51,8 @@ def main():
 
     args.out.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(TEMPLATE, args.out / "submission.py")
+    if (checkpoint.get("hparams") or {}).get("norm", "none") != "none":
+        raise SystemExit("this checkpoint normalises windows: package it with scripts/package_ensemble.py")
     torch.save({"state_dict": model_state}, args.out / "weights.pt")
     run_config = {
         "checkpoint": relative(args.checkpoint),

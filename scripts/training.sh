@@ -1,6 +1,6 @@
 #!/bin/bash
-# Pause, resume or show the local training runs (scripts/train_solver.py, NeuralBench runs through
-# scripts/neuralbench_mps.py, and their data workers). neuralbench_mps.py --download is not a run.
+# Pause, resume or show the local training runs (scripts/train_solver.py, scripts/train_vemg2pose.py,
+# NeuralBench runs through scripts/neuralbench_mps.py, and their data workers). neuralbench_mps.py --download is not a run.
 #
 #     scripts/training.sh pause | resume | status
 #
@@ -11,7 +11,7 @@
 # Deliberately machine-wide: it also catches runs started from other projects with the same
 # script name (Track 1 on the same Mac), so pausing before closing the laptop freezes everything.
 set -u
-mains=$(for pid in $(pgrep -f "scripts/(train_solver|neuralbench_mps)\.py"); do
+mains=$(for pid in $(pgrep -f "scripts/(train_solver|neuralbench_mps|train_vemg2pose)\.py"); do
   ps -o command= -p "$pid" | grep -q -- "--download" || echo "$pid"
 done)
 case "${1:-status}" in
@@ -33,12 +33,16 @@ case "${1:-status}" in
       cmd=$(ps -o command= -p "$main")
       out=$(echo "$cmd" | awk '{print $4}')
       [[ $cmd == *neuralbench_mps.py* ]] && out="neuralbench $(echo "$cmd" | sed 's/.*neuralbench_mps.py //')"
+      [[ $cmd == *train_vemg2pose.py* ]] && out="train_vemg2pose $(echo "$cmd" | sed -n 's/.*--out \([^ ]*\).*/\1/p')"
       # The run's project: its working directory (logs/ are relative to it).
       cwd=$(lsof -a -d cwd -p "$main" -Fn 2>/dev/null | sed -n 's/^n//p')
       echo "$(basename "$cwd"): $out: $([[ $state == T* ]] && echo PAUSED || echo running), started $(ps -o lstart= -p "$main")"
       log=$(ls -t "$cwd"/logs/"$(basename "$out")"_train.log 2>/dev/null | head -1)
       [ -n "$log" ] && grep "^epoch" "$log" | tail -1
       # Its own log: logs/neuralbench_*s<seed>.log (scripts/detach.py naming), else the newest.
+      if [[ $cmd == *train_vemg2pose.py* ]]; then
+        tail -1 "$cwd/$(echo "$cmd" | sed -n 's/.*--out \([^ ]*\).*/\1/p')/metrics.csv" 2>/dev/null
+      fi
       if [[ $cmd == *neuralbench_mps.py* ]]; then
         seed=$(echo "$cmd" | sed -n 's/.*--seeds \([0-9]*\).*/\1/p')
         f=$(ls -t "$cwd"/logs/neuralbench_*${seed:+s$seed}.log "$cwd"/logs/neuralbench_*.log 2>/dev/null | head -1)
