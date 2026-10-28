@@ -2,6 +2,8 @@
 
     python scripts/neuralbench_mps.py emg pose --subset configs/emg2pose_subset.json --download
     python scripts/neuralbench_mps.py emg pose -m vemg2pose --subset configs/emg2pose_subset.json [--seeds 33]
+    python scripts/neuralbench_mps.py emg pose -m vemg2pose --subset configs/emg2pose_subset_158.json \
+        --all-data --epochs 25 --seeds 33
 
 Adapted from ../egg-to-image/scripts/neuralbench_mps.py (copied, not shared):
 - Uses this repo's configs/neuralbench.local.json (``NEURALBENCH_CONFIG``, set by the
@@ -19,6 +21,11 @@ Adapted from ../egg-to-image/scripts/neuralbench_mps.py (copied, not shared):
   each epoch's wall time.
 - Copies each run's ``best.ckpt`` to ``best_kept.ckpt`` before NeuralBench deletes it.
 - ``--seeds 33,34`` replaces NeuralBench's default seed grid (33, 34, 35).
+- ``--all-data`` trains on every recording (all users x all stages): the task's filter that
+  drops test rows outside ``generalization == user_stage`` is disabled, test = the warm-up set
+  (456 recordings, kept as a sanity check), val = 2% of the remaining recordings (monitoring
+  only), train = the rest. Splits are relabelled in the event table, so per-recording caches
+  are reused. ``--epochs N`` fixes the epoch count and disables early stopping.
 """
 import json
 import logging
@@ -57,6 +64,26 @@ def use_subset(subset_file: Path) -> None:
 
     experiment_config.merge_task_config = merge_with_query
     LOGGER.warning("Study query from %s: %d subjects", subset_file, query.count("'") // 2)
+
+
+def use_all_data(epochs: int | None) -> None:
+    """All users x all stages in train; see the module docstring."""
+    from neuralbench import experiment_config
+
+    merge = experiment_config.merge_task_config
+
+    def merge_all_data(*args, **kwargs):
+        config = merge(*args, **kwargs)
+        config["data.study.keep_held_out_user_stage_test.query"] = "duration >= 0"
+        config["data.study.split.test_split_query"] = "split == 'test' and generalization == 'user_stage'"
+        config["data.study.split.valid_split_by"] = "timeline"
+        config["data.study.split.valid_split_ratio"] = 0.02
+        if epochs is not None:
+            config["trainer_config.n_epochs"] = epochs
+            config["trainer_config.patience"] = 10 * epochs  # fixed epoch count
+        return config
+
+    experiment_config.merge_task_config = merge_all_data
 
 
 def keep_best_checkpoints() -> None:
@@ -137,8 +164,16 @@ if __name__ == "__main__":
 
     subset = pop_option("--subset")
     seeds = pop_option("--seeds")
+    epochs = pop_option("--epochs")
+    all_data = "--all-data" in sys.argv
+    if all_data:
+        sys.argv.remove("--all-data")
     if subset:
         use_subset(Path(subset))
+    if all_data:
+        use_all_data(int(epochs) if epochs else None)
+    elif epochs:
+        sys.exit("--epochs is only supported with --all-data")
     if seeds:
         override_seed_grid([int(s) for s in seeds.split(",")])
     keep_best_checkpoints()
