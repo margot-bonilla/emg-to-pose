@@ -1,0 +1,60 @@
+{
+ "members": [
+  {
+   "file": "weights_00.pt",
+   "checkpoint": "save/neuralbench.main.Experiment.run,1/seed=33,task_name=pose,loss.name=L1Loss,brain_model_output_size=20,augmentation={num_bands=1,probability=1},brain_model_config={...497-d2fa8390/epochs/epoch=018.ckpt",
+   "epoch": 18
+  },
+  {
+   "file": "weights_01.pt",
+   "checkpoint": "save/neuralbench.main.Experiment.run,1/seed=33,task_name=pose,loss.name=L1Loss,brain_model_output_size=20,augmentation={num_bands=1,probability=1},brain_model_config={...497-d2fa8390/epochs/epoch=023.ckpt",
+   "epoch": 23
+  },
+  {
+   "file": "weights_02.pt",
+   "checkpoint": "save/neuralbench.main.Experiment.run,1/seed=33,task_name=pose,loss.name=L1Loss,brain_model_output_size=20,augmentation={num_bands=1,probability=1},brain_model_config={...497-d2fa8390/epochs/epoch=024.ckpt",
+   "epoch": 24
+  },
+  {
+   "file": "weights_03.pt",
+   "checkpoint": "save/neuralbench.main.Experiment.run,1/seed=33,task_name=pose,loss.name=L1Loss,brain_model_output_size=20,augmentation={num_bands=1,probability=1},brain_model_config={...497-d2fa8390/epochs/epoch=025.ckpt",
+   "epoch": 25
+  },
+  {
+   "file": "weights_04.pt",
+   "checkpoint": "save/neuralbench.main.Experiment.run,1/seed=33,task_name=pose,loss.name=L1Loss,brain_model_output_size=20,augmentation={num_bands=1,probability=1},brain_model_config={...497-d2fa8390/epochs/epoch=028.ckpt",
+   "epoch": 28
+  },
+  {
+   "file": "weights_05.pt",
+   "checkpoint": "save/neuralbench.main.Experiment.run,1/seed=33,task_name=pose,loss.name=L1Loss,brain_model_output_size=20,augmentation={num_bands=1,probability=1},brain_model_config={...497-c767dd08/epochs/epoch=012.ckpt",
+   "epoch": 12
+  },
+  {
+   "file": "weights_06.pt",
+   "checkpoint": "save/neuralbench.main.Experiment.run,1/seed=33,task_name=pose,loss.name=L1Loss,brain_model_output_size=20,augmentation={num_bands=1,probability=1},brain_model_config={...497-c767dd08/epochs/epoch=023.ckpt",
+   "epoch": 23
+  },
+  {
+   "file": "weights_07.pt",
+   "checkpoint": "save/neuralbench.main.Experiment.run,1/seed=33,task_name=pose,loss.name=L1Loss,brain_model_output_size=20,augmentation={num_bands=1,probability=1},brain_model_config={...497-c767dd08/epochs/epoch=031.ckpt",
+   "epoch": 31
+  },
+  {
+   "file": "weights_08.pt",
+   "checkpoint": "save/neuralbench.main.Experiment.run,1/seed=33,task_name=pose,loss.name=L1Loss,brain_model_output_size=20,augmentation={num_bands=1,probability=1},brain_model_config={...497-c767dd08/epochs/epoch=044.ckpt",
+   "epoch": 44
+  },
+  {
+   "file": "weights_09.pt",
+   "checkpoint": "save/neuralbench.main.Experiment.run,1/seed=33,task_name=pose,loss.name=L1Loss,brain_model_output_size=20,augmentation={num_bands=1,probability=1},brain_model_config={...497-c767dd08/epochs/epoch=049.ckpt",
+   "epoch": 49
+  }
+ ],
+ "repo_commit": "0c9bacea946151865ab35f36f219bae986871b30",
+ "competition_commit": "a66bc23d1a0e686b895c093a642b45c74970758b",
+ "subset": "configs/emg2pose_subset_158.json",
+ "subset_sha1": "05d647dbcf66dbcc2182023cee8067bcfebe12a7",
+ "command": "100 users: scripts/detach.py logs/neuralbench_vemg2pose_u100_s33.log -- .venv/bin/python scripts/neuralbench_mps.py emg pose -m vemg2pose --subset configs/emg2pose_subset_100.json --seeds 33 (train commit 2188cfe); 158 users: same with --subset configs/emg2pose_subset_158.json, log neuralbench_vemg2pose_u158_s33.log (train commit 14baac1)",
+ "selection": "mean of 10 checkpoints: the 5 best held-out (pooled) epochs >= 15 of the 158-user run (18, 23, 24, 25, 28) + the 5 of submissions/vemg2pose_u100_s33_snap5; held-out 16.40 pooled (12 members: 16.40, 158-only 7: 16.44)"
+}
